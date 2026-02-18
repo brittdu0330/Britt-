@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Copy, Download, Sparkles, Send, FileText, Briefcase, RefreshCw, CheckCircle, User, Award, Building, Target, Save, Trash2 } from 'lucide-react';
+import { Copy, Download, Sparkles, Send, FileText, Briefcase, RefreshCw, CheckCircle, User, Award, Building, Target, Save, Trash2, AlertCircle } from 'lucide-react';
 import { LetterLength, LetterStyle, InputData, GenerationConfig } from './types';
 import { generateCoverLetter } from './services/geminiService';
 import PillButton from './components/PillButton';
@@ -47,9 +47,15 @@ const App: React.FC = () => {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
+  const [apiKeyExists, setApiKeyExists] = useState(true);
 
   // Persistence: Load on Mount
   useEffect(() => {
+    // Check if API key is missing
+    if (!process.env.API_KEY) {
+      setApiKeyExists(false);
+    }
+
     const savedProfile = localStorage.getItem(STORAGE_KEY);
     if (savedProfile) {
       try {
@@ -151,6 +157,16 @@ const App: React.FC = () => {
         <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto">
           Hyper-personalized cover letters based on your unique experience and target role.
         </p>
+
+        {!apiKeyExists && (
+          <div className="mt-8 max-w-md mx-auto bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start space-x-3 text-amber-800 text-left">
+            <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+            <div className="text-sm">
+              <p className="font-bold">Missing API Key</p>
+              <p>You need to set the <code className="bg-amber-100 px-1 rounded">API_KEY</code> environment variable in Vercel for this app to function.</p>
+            </div>
+          </div>
+        )}
       </header>
 
       <main className="max-w-6xl mx-auto space-y-8">
@@ -288,9 +304,11 @@ const App: React.FC = () => {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm animate-pulse flex items-center">
-                <span className="mr-2">⚠️</span>
-                {error}
+              <div className="bg-red-50 border border-red-100 text-red-600 px-6 py-4 rounded-2xl flex items-start space-x-3 animate-in fade-in slide-in-from-top-2">
+                <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                <div className="text-sm font-medium">
+                  {error}
+                </div>
               </div>
             )}
 
@@ -298,11 +316,11 @@ const App: React.FC = () => {
             <div className="flex justify-center pt-4">
               <button
                 onClick={handleGenerate}
-                disabled={isGenerating}
+                disabled={isGenerating || !apiKeyExists}
                 className={`
                   relative overflow-hidden group px-12 py-4 rounded-2xl font-bold text-lg text-white transition-all duration-300
                   bg-gradient-tech shadow-lg hover:shadow-xl hover:shadow-blue-200 transform active:scale-95
-                  disabled:opacity-50 disabled:cursor-not-allowed
+                  disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed
                 `}
               >
                 <span className="flex items-center space-x-2">
@@ -372,7 +390,7 @@ const App: React.FC = () => {
                            <div className="absolute inset-0 border-4 border-blue-100 rounded-full"></div>
                            <div className="absolute inset-0 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                         </div>
-                        <p className="text-blue-600 font-medium italic animate-pulse">
+                        <p className="text-blue-600 font-medium italic animate-pulse text-center">
                           {loadingMessages[Math.floor(Date.now() / 2000) % loadingMessages.length]}
                         </p>
                       </div>

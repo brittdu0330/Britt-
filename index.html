@@ -30,21 +30,56 @@
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
         }
+        #error-display {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #b91c1c;
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 9999;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
     </style>
+    <script>
+        // Polyfill process for browser environments to prevent crashes
+        window.process = window.process || { env: {} };
+        
+        // Global error handler to debug "White Screen" issues
+        window.onerror = function(message, source, lineno, colno, error) {
+            const display = document.getElementById('error-display');
+            if (display) {
+                display.style.display = 'block';
+                display.innerHTML = `
+                    <h3 class="font-bold mb-2">Application Error</h3>
+                    <p class="text-sm">${message}</p>
+                    <p class="text-xs mt-2 opacity-70">${source}:${lineno}</p>
+                `;
+            }
+            return false;
+        };
+    </script>
 <script type="importmap">
 {
   "imports": {
+    "react": "https://esm.sh/react@19.0.0",
+    "react-dom": "https://esm.sh/react-dom@19.0.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+    "@google/genai": "https://esm.sh/@google/genai@1.0.2",
+    "lucide-react": "https://esm.sh/lucide-react@0.453.0",
+    "jspdf": "https://esm.sh/jspdf@2.5.1",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
-    "lucide-react": "https://esm.sh/lucide-react@^0.574.0",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
-    "jspdf": "https://esm.sh/jspdf@^2.5.1"
+    "react/": "https://esm.sh/react@^19.2.4/"
   }
 }
 </script>
 </head>
 <body>
+    <div id="error-display"></div>
     <div id="root"></div>
 </body>
 </html>

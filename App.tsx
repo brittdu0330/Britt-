@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Copy, Download, Sparkles, Send, FileText, Briefcase, RefreshCw, CheckCircle, User, Award, Building, Target, Save, Trash2, AlertCircle } from 'lucide-react';
 import { LetterLength, LetterStyle, InputData, GenerationConfig } from './types';
@@ -7,7 +6,7 @@ import PillButton from './components/PillButton';
 // @ts-ignore
 import { jsPDF } from "jspdf";
 
-const STORAGE_KEY = 'ai_cover_letter_user_profile_v2';
+const STORAGE_KEY = 'ai_cover_letter_user_profile_v3';
 
 const InputField = ({ icon: Icon, label, value, onChange, placeholder }: any) => (
   <div className="space-y-2">
@@ -42,8 +41,7 @@ const App: React.FC = () => {
   const [apiKeyExists, setApiKeyExists] = useState(true);
 
   useEffect(() => {
-    // Safety check for API Key
-    const checkKey = () => {
+    const checkKeyAvailability = () => {
       try {
         const key = (typeof process !== 'undefined' && process.env?.API_KEY) || 
                     (window as any).process?.env?.API_KEY;
@@ -53,7 +51,7 @@ const App: React.FC = () => {
       }
     };
     
-    checkKey();
+    checkKeyAvailability();
 
     const savedProfile = localStorage.getItem(STORAGE_KEY);
     if (savedProfile) {
@@ -63,7 +61,7 @@ const App: React.FC = () => {
         setRecentPosition(parsed.recentPosition || '');
         setBackground(parsed.background || '');
       } catch (e) {
-        console.error("Profile load failed", e);
+        console.warn("Storage profile load failed:", e);
       }
     }
   }, []);
@@ -75,7 +73,7 @@ const App: React.FC = () => {
   };
 
   const handleClearProfile = () => {
-    if (confirm("Clear saved profile?")) {
+    if (confirm("Clear your saved professional profile?")) {
       localStorage.removeItem(STORAGE_KEY);
       setName(''); setRecentPosition(''); setBackground('');
     }
@@ -83,7 +81,7 @@ const App: React.FC = () => {
 
   const handleGenerate = async () => {
     if (!background.trim() || !jobDescription.trim()) {
-      setError('Please provide your background and the job description.');
+      setError('Please fill out your background and the job requirements.');
       return;
     }
     setError('');
@@ -96,7 +94,7 @@ const App: React.FC = () => {
       );
       setResult(output);
     } catch (err: any) {
-      setError(err.message || 'Generation failed.');
+      setError(err.message || 'The AI service encountered an issue.');
     } finally {
       setIsGenerating(false);
     }
@@ -113,11 +111,11 @@ const App: React.FC = () => {
       const doc = new jsPDF();
       const margin = 20;
       const textWidth = doc.internal.pageSize.getWidth() - (margin * 2);
-      doc.setFontSize(16).text("Cover Letter", margin, margin);
+      doc.setFontSize(16).text("Professional Cover Letter", margin, margin);
       doc.setFontSize(11).text(doc.splitTextToSize(result, textWidth), margin, margin + 15);
       doc.save("cover-letter.pdf");
     } catch (e) {
-      setError("PDF generation failed.");
+      setError("Unable to generate PDF file.");
     }
   };
 
@@ -126,104 +124,154 @@ const App: React.FC = () => {
       <header className="max-w-6xl mx-auto pt-12 pb-16 text-center">
         <div className="inline-flex items-center justify-center p-2 mb-4 bg-blue-50 rounded-2xl">
           <Sparkles className="w-6 h-6 text-blue-600 mr-2" />
-          <span className="text-blue-600 font-semibold uppercase text-xs">AI Professional Suite</span>
+          <span className="text-blue-600 font-semibold uppercase text-xs tracking-wider">AI Career Assistant</span>
         </div>
-        <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-          AI <span className="text-gradient-tech">Cover Letter</span> Generator
+        <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
+          Tailored <span className="text-gradient-tech">Cover Letters</span> <br/> in Seconds
         </h1>
         
         {!apiKeyExists && (
-          <div className="mt-8 max-w-md mx-auto bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start text-amber-800 text-left">
-            <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0" />
+          <div className="mt-8 max-w-lg mx-auto bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-start text-amber-800 text-left shadow-sm">
+            <AlertCircle className="w-6 h-6 mr-4 flex-shrink-0 text-amber-500" />
             <div className="text-sm">
-              <p className="font-bold">Missing API Key</p>
-              <p>Set <code className="bg-amber-100 px-1 rounded">API_KEY</code> in your Vercel Environment Variables and redeploy.</p>
+              <p className="font-bold mb-1">Service Key Unavailable</p>
+              <p>The application could not find the required API credentials. If you are using Vercel, please check your Environment Variables for <code className="bg-amber-100 px-1 rounded font-mono">API_KEY</code>.</p>
             </div>
           </div>
         )}
       </header>
 
       <main className="max-w-6xl mx-auto space-y-8">
-        <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
             <div className="p-8 lg:p-12 space-y-8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <FileText className="w-5 h-5 text-blue-500" />
-                  <h2 className="text-xl font-semibold">Background</h2>
+                  <div className="p-2 bg-blue-100/50 rounded-xl">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-800">Your Identity</h2>
                 </div>
                 <div className="flex space-x-2">
-                  <button onClick={handleSaveProfile} className={`p-2 rounded-lg ${profileSaved ? 'text-green-600' : 'text-gray-400 hover:text-blue-500'}`}><Save className="w-5 h-5" /></button>
-                  <button onClick={handleClearProfile} className="p-2 text-gray-400 hover:text-red-500"><Trash2 className="w-5 h-5" /></button>
+                  <button onClick={handleSaveProfile} className={`p-2.5 rounded-xl transition-all ${profileSaved ? 'text-green-600 bg-green-50' : 'text-gray-400 hover:text-blue-500 hover:bg-blue-50'}`} title="Save profile locally">
+                    {profileSaved ? <CheckCircle className="w-5 h-5" /> : <Save className="w-5 h-5" />}
+                  </button>
+                  <button onClick={handleClearProfile} className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Reset profile">
+                    <Trash2 className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
-              <div className="space-y-4">
-                <InputField icon={User} label="Name" value={name} onChange={setName} />
-                <InputField icon={Award} label="Recent Role" value={recentPosition} onChange={setRecentPosition} />
-                <textarea value={background} onChange={e => setBackground(e.target.value)} placeholder="Experience summary..." className="w-full h-48 p-4 bg-gray-50 border rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none resize-none" />
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <InputField icon={User} label="Full Name" value={name} onChange={setName} placeholder="Jane Smith" />
+                  <InputField icon={Award} label="Current Role" value={recentPosition} onChange={setRecentPosition} placeholder="Senior Developer" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-500">Your Experience Summary</label>
+                  <textarea 
+                    value={background} 
+                    onChange={e => setBackground(e.target.value)} 
+                    placeholder="Briefly describe your core strengths, achievements, and technical expertise..." 
+                    className="w-full h-56 p-5 bg-gray-50 border border-transparent rounded-[24px] focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-300 outline-none transition-all resize-none text-gray-700" 
+                  />
+                </div>
               </div>
             </div>
 
             <div className="p-8 lg:p-12 space-y-8">
               <div className="flex items-center space-x-3">
-                <Briefcase className="w-5 h-5 text-purple-500" />
-                <h2 className="text-xl font-semibold">Target Job</h2>
+                <div className="p-2 bg-purple-100/50 rounded-xl">
+                  <Briefcase className="w-5 h-5 text-purple-600" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-800">Target Opportunity</h2>
               </div>
-              <div className="space-y-4">
-                <InputField icon={Building} label="Company" value={companyName} onChange={setCompanyName} />
-                <InputField icon={Target} label="Role Applied" value={targetPosition} onChange={setTargetPosition} />
-                <textarea value={jobDescription} onChange={e => setJobDescription(e.target.value)} placeholder="Job description..." className="w-full h-48 p-4 bg-gray-50 border rounded-2xl focus:ring-2 focus:ring-purple-200 outline-none resize-none" />
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <InputField icon={Building} label="Company" value={companyName} onChange={setCompanyName} placeholder="TechCorp Inc." />
+                  <InputField icon={Target} label="Target Position" value={targetPosition} onChange={setTargetPosition} placeholder="Engineering Lead" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-500">Job Description</label>
+                  <textarea 
+                    value={jobDescription} 
+                    onChange={e => setJobDescription(e.target.value)} 
+                    placeholder="Paste the key requirements and description of the role you are applying for..." 
+                    className="w-full h-56 p-5 bg-gray-50 border border-transparent rounded-[24px] focus:bg-white focus:ring-2 focus:ring-purple-100 focus:border-purple-300 outline-none transition-all resize-none text-gray-700" 
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="p-8 bg-gray-50 border-t space-y-8">
-            <div className="flex flex-col md:flex-row gap-8">
-              <div className="flex-1 space-y-4">
-                <p className="text-xs font-bold text-gray-400 uppercase">Length</p>
-                <div className="flex flex-wrap gap-2">
-                  {Object.values(LetterLength).map(l => <PillButton key={l} label={`${l} words`} isActive={length === l} onClick={() => setLength(l)} />)}
+          <div className="p-8 bg-gray-50/80 border-t border-gray-100 space-y-8">
+            <div className="flex flex-col lg:flex-row gap-10">
+              <div className="flex-1 space-y-5">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Desired Word Count</p>
+                <div className="flex flex-wrap gap-2.5">
+                  {Object.values(LetterLength).map(l => (
+                    <PillButton key={l} label={`${l} words`} isActive={length === l} onClick={() => setLength(l)} />
+                  ))}
                 </div>
               </div>
-              <div className="flex-1 space-y-4">
-                <p className="text-xs font-bold text-gray-400 uppercase">Style</p>
-                <div className="flex flex-wrap gap-2">
-                  {Object.values(LetterStyle).map(s => <PillButton key={s} label={s} isActive={style === s} onClick={() => setStyle(s)} />)}
+              <div className="flex-1 space-y-5">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Writing Tone</p>
+                <div className="flex flex-wrap gap-2.5">
+                  {Object.values(LetterStyle).map(s => (
+                    <PillButton key={s} label={s} isActive={style === s} onClick={() => setStyle(s)} />
+                  ))}
                 </div>
               </div>
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl flex space-x-3 text-sm">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <span>{error}</span>
+              <div className="bg-red-50 border border-red-100 text-red-600 p-5 rounded-[20px] flex space-x-4 items-center shadow-sm">
+                <AlertCircle className="w-6 h-6 flex-shrink-0" />
+                <span className="text-sm font-medium">{error}</span>
               </div>
             )}
 
             <button
               onClick={handleGenerate}
               disabled={isGenerating || !apiKeyExists}
-              className="w-full py-4 rounded-2xl font-bold text-white bg-gradient-tech shadow-lg hover:opacity-90 disabled:opacity-50 transition-all flex justify-center items-center space-x-2"
+              className="w-full py-5 rounded-[24px] font-bold text-xl text-white bg-gradient-tech shadow-xl shadow-blue-200/50 hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:grayscale transition-all flex justify-center items-center space-x-3 group"
             >
-              {isGenerating ? <RefreshCw className="animate-spin w-5 h-5" /> : <Send className="w-5 h-5" />}
-              <span>{isGenerating ? 'Drafting...' : 'Generate Letter'}</span>
+              {isGenerating ? (
+                <><RefreshCw className="animate-spin w-6 h-6" /><span>Drafting...</span></>
+              ) : (
+                <><Send className="w-6 h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /><span>Create My Cover Letter</span></>
+              )}
             </button>
           </div>
         </div>
 
-        {result && (
-          <div className="mt-12 bg-white rounded-[32px] p-8 lg:p-12 shadow-xl border border-gray-100 animate-in fade-in slide-in-from-bottom-4">
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="text-2xl font-bold">Your Result</h3>
-              <div className="flex space-x-2">
-                <button onClick={handleCopy} className="p-2 border rounded-xl hover:bg-gray-50">{copied ? <CheckCircle className="text-green-500" /> : <Copy />}</button>
-                <button onClick={handleDownloadPDF} className="p-2 border rounded-xl hover:bg-gray-50"><Download /></button>
+        {result && !isGenerating && (
+          <div className="mt-16 bg-white rounded-[40px] p-8 lg:p-14 shadow-2xl shadow-gray-200/50 border border-gray-100 animate-in fade-in slide-in-from-bottom-6 duration-700">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+              <div className="flex items-center gap-4">
+                <div className="w-2 h-10 bg-gradient-tech rounded-full" />
+                <h3 className="text-3xl font-extrabold text-gray-900">Your Tailored Draft</h3>
+              </div>
+              <div className="flex items-center gap-3 w-full md:w-auto">
+                <button onClick={handleCopy} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 border border-gray-200 rounded-2xl hover:bg-gray-50 transition-all font-semibold text-gray-700 active:bg-gray-100">
+                  {copied ? <CheckCircle className="text-green-500 w-5 h-5" /> : <Copy className="w-5 h-5 text-gray-400" />}
+                  {copied ? 'Copied!' : 'Copy Text'}
+                </button>
+                <button onClick={handleDownloadPDF} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 border border-gray-200 rounded-2xl hover:bg-gray-50 transition-all font-semibold text-gray-700 active:bg-gray-100">
+                  <Download className="w-5 h-5 text-gray-400" />
+                  PDF
+                </button>
               </div>
             </div>
-            <div className="prose prose-blue max-w-none text-gray-700 whitespace-pre-wrap leading-relaxed">{result}</div>
+            <div className="prose prose-lg prose-blue max-w-none text-gray-700 whitespace-pre-wrap leading-relaxed font-light italic bg-gray-50/30 p-8 rounded-[32px] border border-gray-50">
+              {result}
+            </div>
           </div>
         )}
       </main>
+      
+      <footer className="max-w-6xl mx-auto mt-24 text-center">
+        <p className="text-gray-400 text-sm font-medium">© {new Date().getFullYear()} AI Cover Letter Generator. Built for the modern job seeker.</p>
+      </footer>
     </div>
   );
 };

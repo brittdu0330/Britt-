@@ -35,16 +35,39 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
     </style>
-    
+    <script>
+        // Polyfill process for browser environments
+        window.process = window.process || { env: {} };
+        
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error("Global Error:", message, error);
+            const display = document.getElementById('error-display');
+            if (display) {
+                display.style.display = 'block';
+                display.innerHTML = `
+                    <div class="flex items-center gap-3">
+                      <div class="flex-1">
+                        <h3 class="font-bold mb-1">Application Error</h3>
+                        <p class="text-sm opacity-90">${message}</p>
+                      </div>
+                      <button onclick="location.reload()" class="bg-red-200 hover:bg-red-300 text-red-800 px-3 py-1 rounded text-xs font-bold transition-colors">Retry</button>
+                    </div>
+                `;
+            }
+            return false;
+        };
+    </script>
 <script type="importmap">
 {
   "imports": {
+    "react": "https://esm.sh/react@19.0.0",
+    "react-dom": "https://esm.sh/react-dom@19.0.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+    "lucide-react": "https://esm.sh/lucide-react@0.453.0",
+    "@google/genai": "https://esm.sh/@google/genai@1.0.2",
+    "jspdf": "https://esm.sh/jspdf@2.5.1",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
-    "lucide-react": "https://esm.sh/lucide-react@^0.574.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
-    "jspdf": "https://esm.sh/jspdf@^4.1.0"
+    "react/": "https://esm.sh/react@^19.2.4/"
   }
 }
 </script>

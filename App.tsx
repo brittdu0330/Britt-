@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Copy, Download, Sparkles, Send, FileText, Briefcase, RefreshCw, CheckCircle, User, Award, Building, Target, Save, Trash2, AlertCircle } from 'lucide-react';
-import { LetterLength, LetterStyle, InputData, GenerationConfig } from './types';
-import { generateCoverLetter } from './services/geminiService';
-import PillButton from './components/PillButton';
+import { LetterLength, LetterStyle, InputData, GenerationConfig } from './types.ts';
+import { generateCoverLetter } from './services/geminiService.ts';
+import PillButton from './components/PillButton.tsx';
 // @ts-ignore
 import { jsPDF } from "jspdf";
 

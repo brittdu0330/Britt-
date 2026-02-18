@@ -1,10 +1,8 @@
-
 import { GoogleGenAI } from "@google/genai";
-import { GenerationConfig, InputData } from "../types";
+import { GenerationConfig, InputData } from "../types.ts";
 
 const getSafeApiKey = (): string | null => {
   try {
-    // Check both standard process and window.process polyfill
     return (typeof process !== 'undefined' && process.env?.API_KEY) || 
            (window as any).process?.env?.API_KEY || 
            null;
@@ -20,7 +18,7 @@ export const generateCoverLetter = async (
   const apiKey = getSafeApiKey();
   
   if (!apiKey) {
-    throw new Error("API Key is missing. Please ensure 'API_KEY' is set in your Vercel Environment Variables.");
+    throw new Error("API Key is missing. Please ensure 'API_KEY' is set in environment.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -49,16 +47,12 @@ export const generateCoverLetter = async (
     return response.text;
   } catch (error: any) {
     const msg = error?.message || "";
-    
-    // Specifically handle the "Out of Stock" / Quota / Overload issues
     if (msg.toLowerCase().includes("out of stock") || msg.toLowerCase().includes("overloaded")) {
-      throw new Error("The Gemini 3 model is currently at capacity or 'out of stock' in your region. Please try again in a few minutes or check Google AI Studio status.");
+      throw new Error("The AI model is currently at capacity. Please try again in a few minutes.");
     }
-    
     if (msg.includes("429")) {
-      throw new Error("API Quota exceeded. Please wait a minute and try again.");
+      throw new Error("API Quota exceeded. Please wait a minute.");
     }
-
     throw new Error(`AI Service Error: ${msg}`);
   }
 };

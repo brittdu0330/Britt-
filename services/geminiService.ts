@@ -6,10 +6,11 @@ export const generateCoverLetter = async (
   inputs: InputData,
   config: GenerationConfig
 ): Promise<string> => {
-  const apiKey = process.env.API_KEY;
+  // Safely access process.env
+  const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : null;
   
   if (!apiKey) {
-    throw new Error("API Key is missing. Please ensure 'API_KEY' is set in your environment variables.");
+    throw new Error("API Key is missing. Please ensure 'API_KEY' is set in your environment variables (e.g., in Vercel settings).");
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -58,18 +59,16 @@ export const generateCoverLetter = async (
   } catch (error: any) {
     console.error("Gemini API Error details:", error);
     
-    // Extract more specific error info if available
     const errorMessage = error?.message || "Unknown error";
-    const status = error?.status || "N/A";
     
     if (errorMessage.includes("429")) {
-      throw new Error("API Quota exceeded or too many requests. Please wait a moment and try again.");
+      throw new Error("API Quota exceeded. The free tier of Gemini has limits; please try again in a minute.");
     }
     
     if (errorMessage.includes("404") || errorMessage.includes("not found")) {
-      throw new Error("Model not found. The 'gemini-3-flash-preview' model might not be available in your region or for your API key yet.");
+      throw new Error("Model not found. This might be a regional restriction for the 'gemini-3-flash-preview' model.");
     }
 
-    throw new Error(`AI Service Error (${status}): ${errorMessage}`);
+    throw new Error(`AI Service Error: ${errorMessage}`);
   }
 };

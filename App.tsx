@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Download, Sparkles, Send, FileText, Briefcase, RefreshCw, CheckCircle, User, Award, Building, Target, Save, Trash2, AlertCircle } from 'lucide-react';
+import { Copy, Download, Sparkles, Send, FileText, Briefcase, RefreshCw, CheckCircle, User, Award, Building, Target, Save, Trash2, AlertCircle, RotateCcw } from 'lucide-react';
 import { LetterLength, LetterStyle, InputData, GenerationConfig } from './types.ts';
 import { generateCoverLetter } from './services/geminiService.ts';
 import PillButton from './components/PillButton.tsx';
 // @ts-ignore
 import { jsPDF } from "jspdf";
 
-const STORAGE_KEY = 'ai_cover_letter_user_profile_v3';
+const PROFILE_STORAGE_KEY = 'ai_cover_letter_user_profile_v3';
+const JOB_STORAGE_KEY = 'ai_cover_letter_job_data_v3';
 
 const InputField = ({ icon: Icon, label, value, onChange, placeholder }: any) => (
   <div className="space-y-2">
@@ -38,6 +39,7 @@ const App: React.FC = () => {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
+  const [jobSaved, setJobSaved] = useState(false);
   const [apiKeyExists, setApiKeyExists] = useState(true);
 
   useEffect(() => {
@@ -53,7 +55,8 @@ const App: React.FC = () => {
     
     checkKeyAvailability();
 
-    const savedProfile = localStorage.getItem(STORAGE_KEY);
+    // Load Identity
+    const savedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
     if (savedProfile) {
       try {
         const parsed = JSON.parse(savedProfile);
@@ -64,24 +67,61 @@ const App: React.FC = () => {
         console.warn("Storage profile load failed:", e);
       }
     }
+
+    // Load Job
+    const savedJob = localStorage.getItem(JOB_STORAGE_KEY);
+    if (savedJob) {
+      try {
+        const parsed = JSON.parse(savedJob);
+        setCompanyName(parsed.companyName || '');
+        setTargetPosition(parsed.targetPosition || '');
+        setJobDescription(parsed.jobDescription || '');
+      } catch (e) {
+        console.warn("Storage job load failed:", e);
+      }
+    }
   }, []);
 
   const handleSaveProfile = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, recentPosition, background }));
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify({ name, recentPosition, background }));
     setProfileSaved(true);
     setTimeout(() => setProfileSaved(false), 2000);
   };
 
   const handleClearProfile = () => {
-    if (confirm("Clear your saved professional profile?")) {
-      localStorage.removeItem(STORAGE_KEY);
-      setName(''); setRecentPosition(''); setBackground('');
+    localStorage.removeItem(PROFILE_STORAGE_KEY);
+    setName('');
+    setRecentPosition('');
+    setBackground('');
+    setResult('');
+    setError('');
+  };
+
+  const handleSaveJob = () => {
+    localStorage.setItem(JOB_STORAGE_KEY, JSON.stringify({ companyName, targetPosition, jobDescription }));
+    setJobSaved(true);
+    setTimeout(() => setJobSaved(false), 2000);
+  };
+
+  const handleClearJob = () => {
+    localStorage.removeItem(JOB_STORAGE_KEY);
+    setCompanyName('');
+    setTargetPosition('');
+    setJobDescription('');
+    setResult('');
+    setError('');
+  };
+
+  const handleResetAll = () => {
+    if (confirm("Reset everything? This will clear your profile and current job details.")) {
+      handleClearProfile();
+      handleClearJob();
     }
   };
 
   const handleGenerate = async () => {
     if (!background.trim() || !jobDescription.trim()) {
-      setError('Please fill out your background and the job requirements.');
+      setError('Please fill out your experience summary and the job description.');
       return;
     }
     setError('');
@@ -120,7 +160,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pb-20 px-4 md:px-6 lg:px-8">
+    <div className="min-h-screen pb-20 px-4 md:px-6 lg:px-8 bg-[#F7F9FC]">
       <header className="max-w-6xl mx-auto pt-12 pb-16 text-center">
         <div className="inline-flex items-center justify-center p-2 mb-4 bg-blue-50 rounded-2xl">
           <Sparkles className="w-6 h-6 text-blue-600 mr-2" />
@@ -135,7 +175,7 @@ const App: React.FC = () => {
             <AlertCircle className="w-6 h-6 mr-4 flex-shrink-0 text-amber-500" />
             <div className="text-sm">
               <p className="font-bold mb-1">Service Key Unavailable</p>
-              <p>The application could not find the required API credentials. If you are using Vercel, please check your Environment Variables for <code className="bg-amber-100 px-1 rounded font-mono">API_KEY</code>.</p>
+              <p>The application could not find the required API credentials. Please ensure <code className="bg-amber-100 px-1 rounded font-mono">API_KEY</code> is configured.</p>
             </div>
           </div>
         )}
@@ -144,6 +184,7 @@ const App: React.FC = () => {
       <main className="max-w-6xl mx-auto space-y-8">
         <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+            {/* Identity Section */}
             <div className="p-8 lg:p-12 space-y-8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -153,10 +194,10 @@ const App: React.FC = () => {
                   <h2 className="text-xl font-bold text-gray-800">Your Identity</h2>
                 </div>
                 <div className="flex space-x-2">
-                  <button onClick={handleSaveProfile} className={`p-2.5 rounded-xl transition-all ${profileSaved ? 'text-green-600 bg-green-50' : 'text-gray-400 hover:text-blue-500 hover:bg-blue-50'}`} title="Save profile locally">
+                  <button onClick={handleSaveProfile} className={`p-2.5 rounded-xl transition-all ${profileSaved ? 'text-green-600 bg-green-50 shadow-inner' : 'text-gray-400 hover:text-blue-500 hover:bg-blue-50'}`} title="Save identity locally">
                     {profileSaved ? <CheckCircle className="w-5 h-5" /> : <Save className="w-5 h-5" />}
                   </button>
-                  <button onClick={handleClearProfile} className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Reset profile">
+                  <button onClick={handleClearProfile} className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Clear identity content">
                     <Trash2 className="w-5 h-5" />
                   </button>
                 </div>
@@ -178,12 +219,23 @@ const App: React.FC = () => {
               </div>
             </div>
 
+            {/* Target Opportunity Section */}
             <div className="p-8 lg:p-12 space-y-8">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-purple-100/50 rounded-xl">
-                  <Briefcase className="w-5 h-5 text-purple-600" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-purple-100/50 rounded-xl">
+                    <Briefcase className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-800">Target Opportunity</h2>
                 </div>
-                <h2 className="text-xl font-bold text-gray-800">Target Opportunity</h2>
+                <div className="flex space-x-2">
+                  <button onClick={handleSaveJob} className={`p-2.5 rounded-xl transition-all ${jobSaved ? 'text-green-600 bg-green-50 shadow-inner' : 'text-gray-400 hover:text-purple-500 hover:bg-purple-50'}`} title="Save job info locally">
+                    {jobSaved ? <CheckCircle className="w-5 h-5" /> : <Save className="w-5 h-5" />}
+                  </button>
+                  <button onClick={handleClearJob} className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all" title="Clear job description">
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
               <div className="space-y-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -230,17 +282,26 @@ const App: React.FC = () => {
               </div>
             )}
 
-            <button
-              onClick={handleGenerate}
-              disabled={isGenerating || !apiKeyExists}
-              className="w-full py-5 rounded-[24px] font-bold text-xl text-white bg-gradient-tech shadow-xl shadow-blue-200/50 hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:grayscale transition-all flex justify-center items-center space-x-3 group"
-            >
-              {isGenerating ? (
-                <><RefreshCw className="animate-spin w-6 h-6" /><span>Drafting...</span></>
-              ) : (
-                <><Send className="w-6 h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /><span>Create My Cover Letter</span></>
-              )}
-            </button>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={handleGenerate}
+                disabled={isGenerating || !apiKeyExists}
+                className="flex-[3] py-5 rounded-[24px] font-bold text-xl text-white bg-gradient-tech shadow-xl shadow-blue-200/50 hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:grayscale transition-all flex justify-center items-center space-x-3 group"
+              >
+                {isGenerating ? (
+                  <><RefreshCw className="animate-spin w-6 h-6" /><span>Drafting...</span></>
+                ) : (
+                  <><Send className="w-6 h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /><span>Create My Cover Letter</span></>
+                )}
+              </button>
+              <button
+                onClick={handleResetAll}
+                className="flex-1 py-5 rounded-[24px] font-bold text-lg text-gray-500 border border-gray-200 hover:bg-gray-100 hover:text-red-500 transition-all flex justify-center items-center space-x-2"
+              >
+                <RotateCcw className="w-5 h-5" />
+                <span>Start Fresh</span>
+              </button>
+            </div>
           </div>
         </div>
 
